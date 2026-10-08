@@ -50,6 +50,7 @@ ROUTES: dict[str, tuple[Callable[[], None], str | None]] = {
     "attendance": (attendance.attendance, config.PERM_ATTENDANCE),
     "grades": (grades.grades, config.PERM_GRADES),
     "student_cards": (student_cards.student_cards, config.PERM_STUDENT_CARDS),
+    "id_cards": (id_cards.id_cards, config.PERM_STUDENT_CARDS),
     "students": (students.students, config.PERM_STUDENTS),
     "teachers": (teachers.teachers, config.PERM_TEACHERS),
     "academic": (academic.academic, config.PERM_ACADEMIC),
