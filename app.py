@@ -28,6 +28,7 @@ from pages import (
     enrollments,
     finance,
     grades,
+    id_cards,
     login,
     profile,
     student_cards,

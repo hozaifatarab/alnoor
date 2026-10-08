@@ -20,7 +20,11 @@ def main() -> int:
         cmd = [sys.executable, *args]
     import os
     env = dict(os.environ)
-    env.setdefault("INST_PBKDF2_ITERATIONS", "1000")
+    if args[:1] == ["-m"]:
+        # تسريع الاختبارات فقط — لا يُستخدم أبداً لتشغيل الخادم الفعلي،
+        # لأن عدد التكرارات يجب أن يطابق القيمة التي هُشّت بها كلمات المرور
+        # المخزنة في قاعدة البيانات (الافتراضي 200000).
+        env.setdefault("INST_PBKDF2_ITERATIONS", "1000")
     env.setdefault("PYTHONIOENCODING", "utf-8")
     out = open(log_path, "w", encoding="utf-8", errors="replace")
     creationflags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(
