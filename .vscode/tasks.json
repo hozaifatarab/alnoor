@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Check admin login state",
+			"type": "shell",
+			"command": "C:/Users/ali/AppData/Local/Programs/Python/Python314/python.exe",
+			"args": [
+				"-c",
+				"from core import config, security; from core.repos import users; user=users.get_by_username('admin'); print('database:', config.db_path()); print('admin_exists:', user is not None); print('known_password_matches:', bool(user and security.verify_password('NourEdu-2026#Access', user['password_hash'], user['password_salt']))); print('account_state:', None if user is None else {'active': bool(user['is_active']), 'locked': bool(user.get('locked_until')), 'failed_attempts': user.get('failed_attempts')})"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reset admin credential",
+			"type": "shell",
+			"command": "C:/Users/ali/AppData/Local/Programs/Python/Python314/python.exe",
+			"args": [
+				"-c",
+				"from core import config, security; from core.repos import users; from core.services import users_service; user = users.get_by_username('admin'); assert user is not None; password = 'Mhamed12345@'; users_service.change_password(user['id'], password, must_change=False); user = users.get_by_username('admin'); print('database:', config.db_path()); print('password_matches:', security.verify_password(password, user['password_hash'], user['password_salt'])); print('active:', bool(user['is_active'])); print('failed_attempts:', user['failed_attempts'])"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
