@@ -81,44 +81,78 @@ def toast_ok(message: str) -> None:
     toast(message, duration=2, position="center", color="#1e7a4c")
 
 
+_PASSWORD_TOGGLE_CSS = """
+<style>
+.pw-field-wrap { position: relative; display: block; width: 100%; }
+.pw-field-wrap input[type="password"], .pw-field-wrap input[data-pw-visible] { padding-left: 40px !important; }
+.pw-toggle-btn {
+    position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+    z-index: 5; background: transparent; border: none; cursor: pointer;
+    font-size: 17px; line-height: 1; padding: 4px 6px; color: #475569;
+    user-select: none;
+}
+.pw-toggle-btn:hover { color: #0f6e5c; }
+</style>
+"""
+
 _PASSWORD_TOGGLE_JS = """
 (function () {
     if (window.__pwToggleBound) { return; }
     window.__pwToggleBound = true;
+    function decorate(field) {
+        if (field.dataset && field.dataset.pwDecorated) { return; }
+        if (field.dataset) { field.dataset.pwDecorated = '1'; }
+        var wrap = document.createElement('div');
+        wrap.className = 'pw-field-wrap';
+        field.parentNode.insertBefore(wrap, field);
+        wrap.appendChild(field);
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('data-pw-toggle', 'off');
+        btn.className = 'pw-toggle-btn';
+        btn.textContent = '\\u{1F441}';
+        btn.title = 'إظهار كلمة المرور';
+        wrap.appendChild(btn);
+    }
+    function scan() {
+        document.querySelectorAll('input[type="password"], input[data-pw-visible="1"]').forEach(decorate);
+    }
+    if (window.MutationObserver) {
+        new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+    }
+    scan();
+    var tries = 0;
+    var iv = setInterval(function () { scan(); if (++tries > 40) { clearInterval(iv); } }, 400);
     document.addEventListener('click', function (ev) {
         var btn = ev.target && ev.target.closest ? ev.target.closest('[data-pw-toggle]') : null;
         if (!btn) { return; }
         ev.preventDefault();
+        var wrap = btn.parentNode;
+        var field = wrap ? wrap.querySelector('input') : null;
+        if (!field) { return; }
         var show = btn.getAttribute('data-pw-toggle') !== 'on';
-        document.querySelectorAll('input[type="password"], input[data-pw-visible="1"]').forEach(function (f) {
-            if (show) { f.setAttribute('data-pw-visible', '1'); f.type = 'text'; }
-            else { f.removeAttribute('data-pw-visible'); f.type = 'password'; }
-        });
-        document.querySelectorAll('[data-pw-toggle]').forEach(function (b) {
-            b.setAttribute('data-pw-toggle', show ? 'on' : 'off');
-            b.textContent = show ? '🙈 إخفاء كلمة المرور' : '👁 إظهار كلمة المرور';
-        });
+        field.type = show ? 'text' : 'password';
+        field.setAttribute('data-pw-visible', show ? '1' : '0');
+        btn.setAttribute('data-pw-toggle', show ? 'on' : 'off');
+        btn.textContent = show ? '\\u{1F648}' : '\\u{1F441}';
+        btn.title = show ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';
     });
 })();
 """
 
 
 def password_toggle_hint() -> None:
-    """زر إظهار/إخفاء كلمة المرور أثناء الكتابة (يُعرض فوق النموذج).
+    """حقن زر إظهار/إخفاء كلمة المرور *داخل* حقل كلمة المرور نفسه.
 
-    يعمل عبر JS خالص: يقلب حقول ``type=password`` في الصفحة بين النص
-    والنقاط، ويناسب شاشات الدخول وتغيير كلمة المرور وإدارة المستخدمين.
+    يُغلّف كل ``input[type=password]`` في الصفحة ويضع أيقونة عين داخله على
+    اليسار، فتنقلب بين النقاط والنص عند الضغط. يناسب الدخول وتغيير كلمة
+    المرور وإدارة المستخدمين — ويعمل عبر JS خالص داخل المتصفح.
     """
     from pywebio.session import run_js
 
-    put_html(
-        '<div style="text-align:left;margin:4px 0">'
-        '<button type="button" data-pw-toggle="off" '
-        'style="background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;'
-        'border-radius:8px;padding:4px 12px;font-size:13px;cursor:pointer">'
-        "👁 إظهار كلمة المرور</button></div>"
-    )
+    put_html(_PASSWORD_TOGGLE_CSS)
     run_js(_PASSWORD_TOGGLE_JS)
+
 
 
 def toast_error(message: str) -> None:

@@ -18,6 +18,7 @@ NAV_ITEMS: list[tuple[str, str, str]] = [
     ("grades", "الدرجات", config.PERM_GRADES),
     ("finance", "المالية", config.PERM_FINANCE),
     ("student_cards", "🔒 بطاقات الطلاب", config.PERM_STUDENT_CARDS),
+    ("id_cards", "🆔 توليد بطاقة QR", config.PERM_STUDENT_CARDS),
     ("students", "الطلاب", config.PERM_STUDENTS),
     ("teachers", "المعلمون", config.PERM_TEACHERS),
     ("academic", "البنية الأكاديمية", config.PERM_ACADEMIC),

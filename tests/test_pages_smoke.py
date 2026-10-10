@@ -17,6 +17,7 @@ PAGE_MODULES = [
     "pages.attendance",
     "pages.grades",
     "pages.student_cards",
+    "pages.id_cards",
     "pages.finance",
     "pages.students",
     "pages.teachers",
@@ -62,6 +63,7 @@ class RoutesSmokeTests(DbTestCase):
             "grades",
             "finance",
             "student_cards",
+            "id_cards",
             "students",
             "teachers",
             "academic",
@@ -195,7 +197,7 @@ class RoutesSmokeTests(DbTestCase):
         self.assertIn("&lt;img", output)
 
     def test_password_toggle_hint_renders_button_and_js(self) -> None:
-        """زر إظهار كلمة المرور يُرسم في الدخول وتغيير المرور والنماذج."""
+        """زر إظهار كلمة المرور يُحقن داخل حقل كلمة المرور (CSS + JS)."""
         from pathlib import Path
         from unittest.mock import patch
 
@@ -205,13 +207,18 @@ class RoutesSmokeTests(DbTestCase):
             "pywebio.session.run_js"
         ) as run_js:
             components.password_toggle_hint()
-        html = put_html.call_args.args[0]
-        self.assertIn("data-pw-toggle", html)
-        self.assertIn("إظهار كلمة المرور", html)
+        css = put_html.call_args.args[0]
+        self.assertIn("pw-field-wrap", css)
+        self.assertIn("pw-toggle-btn", css)
         run_js.assert_called_once()
         js = run_js.call_args.args[0]
         self.assertIn('type="password"', js)
+        self.assertIn("data-pw-toggle", js)
         self.assertIn("__pwToggleBound", js)
+        # الأيقونة تُبنى داخل غلاف الحقل وليس زراً منفصلاً فوق النموذج
+        self.assertIn("wrap.appendChild(btn)", js)
+        self.assertIn("إظهار كلمة المرور", js)
+        self.assertNotIn("إظهار كلمة المرور</button>", css)
 
         root = Path(__file__).resolve().parents[1]
         login_src = (root / "pages" / "login.py").read_text(encoding="utf-8")
@@ -220,6 +227,33 @@ class RoutesSmokeTests(DbTestCase):
         self.assertIn("password_toggle_hint", profile_src)
         components_src = (root / "ui" / "components.py").read_text(encoding="utf-8")
         self.assertIn('f.get("type") == "password"', components_src)
+
+    def test_id_cards_renders_signed_qr(self) -> None:
+        """شاشة توليد بطاقة QR تُعرض فعلياً وتُنتج بطاقة موقّعة قابلة للمسح."""
+        from unittest.mock import patch
+
+        import pages.id_cards as id_cards_page
+
+        form_data = {
+            "full_name": "حذيفة بن سالم",
+            "student_no": "std-2026-0001",
+            "class_name": "الصف الأول-أ",
+            "status": "منتظم",
+            "scale": "4",
+        }
+        html_chunks: list[str] = []
+        with (
+            patch("pages.id_cards.put_html", side_effect=lambda *a, **k: html_chunks.append(a[0] if a else "")),
+            patch("pages.id_cards.put_buttons"),
+            patch("ui.layout.put_html", side_effect=lambda *a, **k: html_chunks.append(a[0] if a else "")),
+            patch("ui.layout.footer"),
+        ):
+            id_cards_page._render_result(form_data)
+        page = " ".join(html_chunks)
+        self.assertIn("حذيفة بن سالم", page)
+        self.assertIn("STD-2026-0001", page)
+        self.assertIn("<svg", page)  # رمز QR فعلي داخل البطاقة
+        self.assertIn("الصف الأول-أ", page)
 
 
 class BootstrapSmokeTests(DbTestCase):
