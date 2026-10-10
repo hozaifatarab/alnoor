@@ -15,6 +15,8 @@ import logging
 import sys
 from typing import Callable
 
+from pywebio.session import go_app
+
 from core import auth, bootstrap, config, db, logging_setup
 from core.repos import settings as settings_repo
 from pages import (
@@ -42,6 +44,13 @@ from ui import theme
 
 logger = logging.getLogger(__name__)
 
+
+def _logout() -> None:
+    """ينهي الجلسة ثم يعيد التوجيه لصفحة الدخول."""
+    auth.logout()
+    go_app("index", new_window=False)
+
+
 # جدول المسارات: (اسم التطبيق/المسار, الدالة, الصلاحية المطلوبة أو None = يكفي تسجيل الدخول)
 ROUTES: dict[str, tuple[Callable[[], None], str | None]] = {
     "index": (login.login, "public"),
@@ -63,6 +72,7 @@ ROUTES: dict[str, tuple[Callable[[], None], str | None]] = {
     "settings": (settings_page.settings, config.PERM_SETTINGS),
     "audit_log": (audit_log.audit_log, config.PERM_SETTINGS),
     "my_account": (profile.my_account, None),
+    "logout": (_logout, "public"),
 }
 
 

@@ -4,10 +4,20 @@ from __future__ import annotations
 from html import escape
 from typing import Any, Sequence
 
-from pywebio.output import put_buttons, put_html, put_markdown, put_row, put_scope, put_text, use_scope
+from pywebio.output import (
+    put_buttons,
+    put_collapse,
+    put_html,
+    put_markdown,
+    put_row,
+    put_scope,
+    put_text,
+    use_scope,
+)
 from pywebio.session import go_app, set_env
 
 from core import config
+from core.repos import settings as settings_repo
 
 # عناصر القائمة الرئيسية (تُفلتر حسب صلاحية المستخدم)
 # (معرّف التطبيق, العنوان, الصلاحية المطلوبة)
@@ -32,6 +42,17 @@ NAV_ITEMS: list[tuple[str, str, str]] = [
 
 ACCOUNT_ITEM = ("my_account", "حسابي", None)
 
+# تجميع القائمة في مجموعات منطقية (عنوان المجموعة -> معرّفات التطبيقات).
+# المجموعة التي تحوي الصفحة النشطة تُفتح تلقائياً؛ البقية مطويّة.
+NAV_GROUPS: list[tuple[str, list[str]]] = [
+    ("🏠 الرئيسية", ["dashboard"]),
+    ("📋 الحضور والدرجات", ["attendance_scan", "attendance", "grades"]),
+    ("🪪 البطاقات", ["student_cards", "id_cards"]),
+    ("👥 الأشخاص", ["students", "teachers"]),
+    ("🎓 البنية الأكاديمية", ["academic", "classes", "subjects", "enrollments", "assignments"]),
+    ("⚙️ النظام", ["finance", "users", "settings", "my_account"]),
+]
+
 
 def escape_html(value: Any) -> str:
     """تحويل قيمة غير موثوقة إلى نص آمن داخل HTML."""
@@ -51,55 +72,72 @@ def page_header(
     subtitle: str | None = None,
     institution: str | None = None,
 ) -> None:
-    """ترويسة موحّدة + قائمة تنقّل مفلترة بالصلاحيات + عنوان الصفحة."""
-    from core.repos import settings as settings_repo
-
+    """شريط جانبي على اليسار + عنوان الصفحة داخل المحتوى."""
     institution = institution or settings_repo.institution_name()
     title = institution if not subtitle else f"{subtitle} | {institution}"
     set_env(title=title, output_animation=False)
+    _sidebar(user, active, institution)
+    if subtitle:
+        put_html(f'<div class="inst-pagebar">{escape_html(subtitle)}</div>')
 
-    user_line = ""
-    if user:
-        user_line = (
-            f'<div class="inst-user">{escape_html(user["full_name"])} — '
-            f"{config.role_label(user['role'])}</div>"
-        )
-    put_html(
-        f'<div class="inst-header"><div class="inst-title">{escape_html(institution)}</div>'
-        f"{user_line}</div>"
+
+def _sidebar(
+    user: dict[str, Any] | None, active: str | None, institution: str
+) -> None:
+    """شريط تنقّل جانبي احترافي على اليسار (HTML خالص، بلا أزرار PyWebIO).
+
+    الروابط عادية ``<a href="?app=...">`` تعمل لأن الجلسة محفوظة في كوكي
+    موقّع (``inst_auth``) يُرسل مع كل طلب. الخروج وحده يحتاج إجراءً خادمياً،
+    لذا يشير إلى مسار ``?app=logout`` المستقل.
+    """
+    allowed = {app_name: label for app_name, label, _perm in nav_items_for(user)}
+    label_of = {app_name: label for app_name, label, _perm in NAV_ITEMS}
+    label_of[ACCOUNT_ITEM[0]] = ACCOUNT_ITEM[1]
+
+    parts = ['<nav class="inst-sidebar" aria-label="قائمة التنقّل">']
+    parts.append(
+        '<a class="sb-brand" href="?app=dashboard">'
+        f'<div class="sb-brand-title">{escape_html(institution)}</div>'
+        '<div class="sb-brand-sub">نظام إدارة المؤسسة</div></a>'
     )
-    _nav_bar(user, active)
+    parts.append('<div class="sb-nav">')
+
+    for group_title, app_ids in NAV_GROUPS:
+        links: list[str] = []
+        for app_id in app_ids:
+            if app_id not in allowed:
+                continue
+            is_active = " active" if active == app_id else ""
+            links.append(
+                f'<a class="sb-link{is_active}" href="?app={app_id}">'
+                f"{escape_html(allowed[app_id])}</a>"
+            )
+        if not links:
+            continue
+        parts.append('<div class="sb-group">')
+        parts.append(f'<div class="sb-group-title">{escape_html(group_title)}</div>')
+        parts.extend(links)
+        parts.append("</div>")
+
+    parts.append("</div>")  # /sb-nav
+
+    # تذييل المستخدم + خروج
+    parts.append('<div class="sb-foot">')
+    if user:
+        parts.append(f'<div class="sb-user-name">{escape_html(user["full_name"])}</div>')
+        parts.append(
+            f'<div class="sb-user-role">{config.role_label(user["role"])}</div>'
+        )
+    parts.append('<a class="sb-link sb-logout" href="?app=logout">⬅️ خروج</a>')
+    parts.append("</div>")  # /sb-foot
+    parts.append("</nav>")
+
+    put_html("".join(parts))
 
 
 def _nav_bar(user: dict[str, Any] | None, active: str | None) -> None:
-    items = nav_items_for(user)
-    buttons = []
-    for app_name, label, _perm in items:
-        buttons.append(
-            {
-                "label": label,
-                "value": app_name,
-                "color": "primary" if active == app_name else "secondary",
-            }
-        )
-    buttons.append({"label": "خروج", "value": "__logout__", "color": "danger"})
-    # تقسيم الأزرار على عدة صفوف (6 لكل صف) حتى لا يختفي أي زر خارج الشاشة.
-    for chunk in _chunks(buttons, 6):
-        put_buttons(chunk, onclick=_nav_clicked, small=True, outline=True)
-
-
-def _chunks(seq: list[dict[str, str]], size: int) -> list[list[dict[str, str]]]:
-    return [seq[i : i + size] for i in range(0, len(seq), size)]
-
-
-def _nav_clicked(value: str) -> None:
-    if value == "__logout__":
-        from core import auth
-
-        auth.logout()
-        go_app("index", new_window=False)
-        return
-    go_app(value, new_window=False)
+    """(مهجورة) استُبدلت بالشريط الجانبي ``_sidebar`` — تُبقي للتوافق فقط."""
+    _sidebar(user, active, settings_repo.institution_name())
 
 
 def alert(message: str, kind: str = "info") -> None:

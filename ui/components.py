@@ -83,15 +83,43 @@ def toast_ok(message: str) -> None:
 
 _PASSWORD_TOGGLE_CSS = """
 <style>
-.pw-field-wrap { position: relative; display: block; width: 100%; }
-.pw-field-wrap input[type="password"], .pw-field-wrap input[data-pw-visible] { padding-left: 40px !important; }
-.pw-toggle-btn {
-    position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
-    z-index: 5; background: transparent; border: none; cursor: pointer;
-    font-size: 17px; line-height: 1; padding: 4px 6px; color: #475569;
-    user-select: none;
+.pw-field-wrap {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
 }
-.pw-toggle-btn:hover { color: #0f6e5c; }
+.pw-field-wrap > input[type="password"],
+.pw-field-wrap > input[data-pw-visible] {
+    padding-right: 40px !important;
+    padding-left: 13px !important;
+}
+.pw-field-wrap > .pw-toggle-btn {
+    position: absolute !important;
+    right: 8px !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 20 !important;
+    width: 26px !important; height: 26px !important;
+    min-width: 0 !important; padding: 0 !important; margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center; justify-content: center;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-size: 17px !important;
+    line-height: 1 !important;
+    color: #64748b !important;
+    user-select: none;
+    text-indent: 0 !important;
+    float: none !important;
+    animation: none !important;
+    box-sizing: content-box !important;
+}
+.pw-field-wrap > .pw-toggle-btn:hover { color: #0f6e5c !important; background: transparent !important; }
+.pw-field-wrap > .pw-toggle-btn:focus { outline: none !important; }
 </style>
 """
 
@@ -99,8 +127,17 @@ _PASSWORD_TOGGLE_JS = """
 (function () {
     if (window.__pwToggleBound) { return; }
     window.__pwToggleBound = true;
+    var EYE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    var EYE_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
     function decorate(field) {
         if (field.dataset && field.dataset.pwDecorated) { return; }
+        // PyWebIO قد يستبدل عقدة الإدخال عند التحقق (blur/change)؛ إن كان الحقل
+        // أصلاً داخل غلاف سابق فلا تُعِد التغليف (يمنع تداخل الأغلفة وفصل الزر).
+        var p = field.parentNode;
+        if (p && p.classList && p.classList.contains('pw-field-wrap')) {
+            if (field.dataset) { field.dataset.pwDecorated = '1'; }
+            return;
+        }
         if (field.dataset) { field.dataset.pwDecorated = '1'; }
         var wrap = document.createElement('div');
         wrap.className = 'pw-field-wrap';
@@ -110,7 +147,7 @@ _PASSWORD_TOGGLE_JS = """
         btn.type = 'button';
         btn.setAttribute('data-pw-toggle', 'off');
         btn.className = 'pw-toggle-btn';
-        btn.textContent = '\\u{1F441}';
+        btn.innerHTML = EYE;
         btn.title = 'إظهار كلمة المرور';
         wrap.appendChild(btn);
     }
@@ -134,7 +171,7 @@ _PASSWORD_TOGGLE_JS = """
         field.type = show ? 'text' : 'password';
         field.setAttribute('data-pw-visible', show ? '1' : '0');
         btn.setAttribute('data-pw-toggle', show ? 'on' : 'off');
-        btn.textContent = show ? '\\u{1F648}' : '\\u{1F441}';
+        btn.innerHTML = show ? EYE_OFF : EYE;
         btn.title = show ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور';
     });
 })();

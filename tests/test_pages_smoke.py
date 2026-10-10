@@ -75,6 +75,7 @@ class RoutesSmokeTests(DbTestCase):
             "settings",
             "audit_log",
             "my_account",
+            "logout",
         }
         self.assertEqual(set(ROUTES), expected)
         applications = build_applications()
@@ -95,7 +96,7 @@ class RoutesSmokeTests(DbTestCase):
         from app import build_applications
 
         applications = build_applications()
-        guarded = [name for name in applications if name not in ("index",)]
+        guarded = [name for name in applications if name not in ("index", "logout")]
         for name in guarded:
             with self.subTest(route=name):
                 self.assertTrue(hasattr(applications[name], "__wrapped__"))
