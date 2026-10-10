@@ -72,6 +72,8 @@ def create_student(
     payload: dict[str, Any],
     *,
     year_name: str | None = None,
+    user_id: int | None = None,
+    conn: Any = None,
     actor: dict[str, Any] | None = None,
     ip: str | None = None,
 ) -> int:
@@ -92,6 +94,8 @@ def create_student(
         address=data["address"],
         status=data["status"],
         notes=data["notes"],
+        user_id=user_id,
+        conn=conn,
     )
     audit.log(
         "إضافة طالب",
@@ -100,6 +104,7 @@ def create_student(
         details=f"{student_no} - {data['full_name']}",
         user=actor,
         ip=ip,
+        conn=conn,
     )
     return student_id
 

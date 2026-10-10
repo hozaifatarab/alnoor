@@ -54,13 +54,15 @@ ROLE_STAFF = "staff"
 ROLE_ACCOUNTANT = "accountant"
 ROLE_TEACHER = "teacher"
 ROLE_VIEWER = "viewer"
-ROLES = (ROLE_ADMIN, ROLE_STAFF, ROLE_ACCOUNTANT, ROLE_TEACHER, ROLE_VIEWER)
+ROLE_STUDENT = "student"
+ROLES = (ROLE_ADMIN, ROLE_STAFF, ROLE_ACCOUNTANT, ROLE_TEACHER, ROLE_VIEWER, ROLE_STUDENT)
 ROLE_LABELS = {
     ROLE_ADMIN: "مدير النظام",
     ROLE_STAFF: "شؤون الطلاب",
     ROLE_ACCOUNTANT: "محاسب",
     ROLE_TEACHER: "معلّم",
     ROLE_VIEWER: "عرض فقط",
+    ROLE_STUDENT: "طالب",
 }
 
 # ---------- الصلاحيات ----------
@@ -77,15 +79,18 @@ PERM_USERS = "users"
 PERM_SETTINGS = "settings"
 # إصدار بطاقات QR للطلاب — للمدير فقط (التوقيع بمفتاح النظام عملية حساسة).
 PERM_STUDENT_CARDS = "student_cards"
+# حساب الطالب الشخصي: يملكه الطالب بنفسه (يعرض صفحته الشخصية فقط).
+PERM_SELF = "self"
 
 ALL_PERMISSIONS = frozenset({
     PERM_DASHBOARD, PERM_STUDENTS, PERM_TEACHERS, PERM_ACADEMIC, PERM_ENROLLMENTS,
     PERM_ATTENDANCE, PERM_GRADES, PERM_FINANCE, PERM_REPORTS, PERM_USERS, PERM_SETTINGS,
-    PERM_STUDENT_CARDS,
+    PERM_STUDENT_CARDS, PERM_SELF,
 })
 
 # مصفوفة الصلاحيات: إصدار بطاقات QR (PERM_STUDENT_CARDS) للمدير فقط —
 # التوقيع بمفتاح النظام عملية حساسة ولا تُمنح لأي دور آخر.
+# دور «الطالب» يملك فقط صلاحية حساب الشخصي (PERM_SELF) ليطابق مسار my_account.
 PERMISSION_MATRIX: dict[str, frozenset[str]] = {
     ROLE_ADMIN: ALL_PERMISSIONS,
     ROLE_STAFF: frozenset({
@@ -95,6 +100,7 @@ PERMISSION_MATRIX: dict[str, frozenset[str]] = {
     ROLE_ACCOUNTANT: frozenset({PERM_DASHBOARD, PERM_STUDENTS, PERM_FINANCE, PERM_REPORTS}),
     ROLE_TEACHER: frozenset({PERM_DASHBOARD, PERM_STUDENTS, PERM_ATTENDANCE, PERM_GRADES}),
     ROLE_VIEWER: frozenset({PERM_DASHBOARD, PERM_STUDENTS, PERM_REPORTS}),
+    ROLE_STUDENT: frozenset({PERM_SELF}),
 }
 
 

@@ -118,24 +118,30 @@ def create(
     address: str | None,
     status: str,
     notes: str | None = None,
+    user_id: int | None = None,
+    conn: Any = None,
 ) -> int:
-    return db.execute(
+    sql = (
         "INSERT INTO students(student_no, full_name, national_id, gender, birth_date,"
-        " guardian_name, guardian_phone, address, status, notes)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (
-            student_no,
-            full_name,
-            national_id,
-            gender,
-            birth_date,
-            guardian_name,
-            guardian_phone,
-            address,
-            status,
-            notes,
-        ),
+        " guardian_name, guardian_phone, address, status, notes, user_id)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
+    params = (
+        student_no,
+        full_name,
+        national_id,
+        gender,
+        birth_date,
+        guardian_name,
+        guardian_phone,
+        address,
+        status,
+        notes,
+        user_id,
+    )
+    if conn is not None:
+        return int(conn.execute(sql, params).lastrowid or 0)
+    return db.execute(sql, params)
 
 
 def update(
@@ -170,6 +176,15 @@ def update(
 
 def set_status(student_id: int, status: str) -> None:
     db.execute("UPDATE students SET status = ? WHERE id = ?", (status, student_id))
+
+
+def set_user_link(student_id: int, user_id: int | None) -> None:
+    db.execute("UPDATE students SET user_id = ? WHERE id = ?", (user_id, student_id))
+
+
+def get_by_user_id(user_id: int) -> dict[str, Any] | None:
+    row = db.query_one("SELECT * FROM students WHERE user_id = ?", (user_id,))
+    return dict(row) if row else None
 
 
 def delete(student_id: int) -> None:

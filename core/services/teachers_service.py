@@ -60,6 +60,7 @@ def create_teacher(
     salary: Any = 0,
     *,
     user_id: int | None = None,
+    conn: Any = None,
     actor: dict[str, Any] | None = None,
     ip: str | None = None,
 ) -> int:
@@ -73,6 +74,7 @@ def create_teacher(
         data["specialty"],
         data["salary"],
         user_id,
+        conn,
     )
     audit.log(
         "إضافة معلم",
@@ -81,6 +83,7 @@ def create_teacher(
         details=data["full_name"],
         user=actor,
         ip=ip,
+        conn=conn,
     )
     return teacher_id
 

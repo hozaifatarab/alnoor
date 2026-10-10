@@ -40,6 +40,7 @@ from pages import (
     users,
 )
 from pages import settings as settings_page
+from pages import people as people_page
 from ui import theme
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ ROUTES: dict[str, tuple[Callable[[], None], str | None]] = {
     "finance": (finance.finance, config.PERM_FINANCE),
     "assignments": (assignments.assignments, config.PERM_ACADEMIC),
     "users": (users.users, config.PERM_USERS),
+    "people": (people_page.people, config.PERM_USERS),
     "settings": (settings_page.settings, config.PERM_SETTINGS),
     "audit_log": (audit_log.audit_log, config.PERM_SETTINGS),
     "my_account": (profile.my_account, None),

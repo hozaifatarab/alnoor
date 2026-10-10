@@ -27,6 +27,7 @@ PAGE_MODULES = [
     "pages.enrollments",
     "pages.assignments",
     "pages.users",
+    "pages.people",
     "pages.settings",
     "pages.audit_log",
 ]
@@ -72,6 +73,7 @@ class RoutesSmokeTests(DbTestCase):
             "enrollments",
             "assignments",
             "users",
+            "people",
             "settings",
             "audit_log",
             "my_account",

@@ -50,12 +50,16 @@ def create(
     specialty: str | None,
     salary: float,
     user_id: int | None = None,
+    conn: Any = None,
 ) -> int:
-    return db.execute(
+    sql = (
         "INSERT INTO teachers(full_name, national_id, phone, email, hire_date, specialty, salary, user_id)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (full_name, national_id, phone, email, hire_date, specialty, salary, user_id),
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     )
+    params = (full_name, national_id, phone, email, hire_date, specialty, salary, user_id)
+    if conn is not None:
+        return int(conn.execute(sql, params).lastrowid or 0)
+    return db.execute(sql, params)
 
 
 def update(

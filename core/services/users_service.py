@@ -76,6 +76,7 @@ def create_user(
     *,
     must_change: bool = True,
     is_active: bool = True,
+    conn: Any = None,
     actor: dict[str, Any] | None = None,
     ip: str | None = None,
 ) -> int:
@@ -83,7 +84,7 @@ def create_user(
     full_name = v.require_text(full_name, "الاسم الكامل", min_len=3, max_len=80)
     role = _validate_role(role)
     security.validate_password_policy(password, username)
-    if repo.get_by_username(username):
+    if repo.username_taken(username, conn):
         raise DuplicateError(f"اسم المستخدم «{username}» مستخدم مسبقاً")
     password_hash, salt = security.hash_password(password)
     user_id = repo.create(
@@ -94,6 +95,7 @@ def create_user(
         password_salt=salt,
         is_active=1 if is_active else 0,
         must_change_password=1 if must_change else 0,
+        conn=conn,
     )
     audit.log(
         "إنشاء مستخدم",
@@ -102,6 +104,7 @@ def create_user(
         details=f"{username} ({config.role_label(role)})",
         user=actor,
         ip=ip,
+        conn=conn,
     )
     return user_id
 

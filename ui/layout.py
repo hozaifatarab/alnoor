@@ -37,6 +37,7 @@ NAV_ITEMS: list[tuple[str, str, str]] = [
     ("enrollments", "التسجيل", config.PERM_ENROLLMENTS),
     ("assignments", "الإسناد التدريسي", config.PERM_ACADEMIC),
     ("users", "المستخدمون", config.PERM_USERS),
+    ("people", "تسجيل طالب/معلّم", config.PERM_USERS),
     ("settings", "الإعدادات", config.PERM_SETTINGS),
 ]
 
@@ -50,7 +51,7 @@ NAV_GROUPS: list[tuple[str, list[str]]] = [
     ("🪪 البطاقات", ["student_cards", "id_cards"]),
     ("👥 الأشخاص", ["students", "teachers"]),
     ("🎓 البنية الأكاديمية", ["academic", "classes", "subjects", "enrollments", "assignments"]),
-    ("⚙️ النظام", ["finance", "users", "settings", "my_account"]),
+    ("⚙️ النظام", ["finance", "users", "people", "settings", "my_account"]),
 ]
 
 

@@ -1,6 +1,7 @@
 """مستودع المستخدمين."""
 from __future__ import annotations
 
+import sqlite3
 from typing import Any
 
 from .. import db
@@ -16,6 +17,14 @@ def get_by_username(username: str) -> dict[str, Any] | None:
         "SELECT * FROM users WHERE lower(username) = lower(?)", (username,)
     )
     return dict(row) if row else None
+
+
+def username_taken(username: str, conn: "sqlite3.Connection | None" = None) -> bool:
+    """هل اسم المستخدم مستخدم مسبقاً؟ (يقبل اتصالاً صريحاً داخل معاملة)."""
+    sql = "SELECT 1 FROM users WHERE lower(username) = lower(?) LIMIT 1"
+    if conn is not None:
+        return conn.execute(sql, (username,)).fetchone() is not None
+    return db.query_one(sql, (username,)) is not None
 
 
 def list_users(search: str | None = None, role: str | None = None) -> list[dict[str, Any]]:
@@ -39,12 +48,16 @@ def create(
     password_salt: str,
     is_active: int = 1,
     must_change_password: int = 0,
+    conn: sqlite3.Connection | None = None,
 ) -> int:
-    return db.execute(
+    sql = (
         "INSERT INTO users(username, full_name, role, password_hash, password_salt,"
-        " is_active, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (username, full_name, role, password_hash, password_salt, is_active, must_change_password),
+        " is_active, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?)"
     )
+    params = (username, full_name, role, password_hash, password_salt, is_active, must_change_password)
+    if conn is not None:
+        return int(conn.execute(sql, params).lastrowid or 0)
+    return db.execute(sql, params)
 
 
 def update_profile(user_id: int, full_name: str, role: str, is_active: int) -> None:
