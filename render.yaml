@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: alnoor
+    runtime: python
+    plan: starter
+    # ملاحظة: القرص الدائم (disk) يتطلب خطة مدفوعة — لا يعمل على الخطة المجانية.
+    # على الخطة المجانية أزل قسم disk وستُفقد بيانات SQLite عند كل إعادة نشر/تشغيل.
+    buildCommand: pip install -r requirements.txt
+    # يعمل التطبيق عبر سيرفر Tornado المدمج في PyWebIO (لا يوجد gunicorn/WSGI في المشروع).
+    # يستقبل app.py متغير البيئة PORT تلقائيًا بعد الإصلاح.
+    startCommand: python app.py --host 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: INST_DATA_DIR
+        # يجب ربط هذا المسار بقرص دائم (Persistent Disk) في Render وإلا فُقدت البيانات.
+        value: /opt/render/project/src/data
+      - key: INST_PBKDF2_ITERATIONS
+        value: "200000"
+    disk:
+      name: alnoor-data
+      # يحفظ قاعدة SQLite (data/institution.db) والسجلات عبر عمليات إعادة النشر/التشغيل.
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

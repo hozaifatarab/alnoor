@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from typing import Callable
 
@@ -93,8 +94,8 @@ def build_applications() -> dict[str, Callable[[], None]]:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="نظام إدارة المؤسسة التعليمية")
-    parser.add_argument("--port", type=int, default=8080, help="منفذ الخدمة (افتراضي 8080)")
-    parser.add_argument("--host", default="127.0.0.1", help="عنوان الاستماع (افتراضي 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8080)), help="منفذ الخدمة (افتراضي 8080 أو متغير البيئة PORT)")
+    parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"), help="عنوان الاستماع (افتراضي 127.0.0.1، واستخدم 0.0.0.0 على Render)")
     parser.add_argument("--db", default=None, help="مسار قاعدة البيانات (افتراضي data/institution.db)")
     parser.add_argument("--no-cdn", action="store_true", help="تعطيل CDN لتشغيل بلا إنترنت")
     parser.add_argument("--remote", action="store_true", help="إتاحة الوصول من أجهزة الشبكة")
@@ -104,9 +105,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    if args.db:
-        import os
-
+    # تجاهل وسيط --db الصريح فقط؛ متغير البيئة INST_DB (المستخدم في الاختبارات
+    # وعلى Render) له الأولوية ويُترك كما هو ليقرأه config.db_path().
+    if args.db and "INST_DB" not in os.environ:
         os.environ["INST_DB"] = args.db
     logger_path = logging_setup.setup_logging(logging.DEBUG if args.debug else logging.INFO)
     applied = db.init_db()
