@@ -1,6 +1,0 @@
-f=open('requirements.txt',encoding='utf-8').read()  
-print(len(f.split(chr(10))))  
-f2=open('requirements.txt',encoding='utf-8').readlines()  
-out=open('mod_lines.txt','w',encoding='utf-8')  
-f2=open('requirements.txt',encoding='utf-8').readlines()  
-out=open('mod_lines.txt','w',encoding='utf-8')  
