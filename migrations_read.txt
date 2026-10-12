@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "c:\Users\ali\Desktop\\u0645\u0648\u0624\u0633\u0633\u0647 \u062a\u0639\u0644\u0645\u064a\u0647\readmig.py", line 2, in <module>
+    [print(open('core/migrations/'+f, encoding='utf-8').read()) for f in sorted(os.listdir('core/migrations'))]  
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\ali\Desktop\\u0645\u0648\u0624\u0633\u0633\u0647 \u062a\u0639\u0644\u0645\u064a\u0647\readmig.py", line 2, in <listcomp>
+    [print(open('core/migrations/'+f, encoding='utf-8').read()) for f in sorted(os.listdir('core/migrations'))]  
+     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ali\AppData\Local\Programs\Python\Python311\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 78-84: character maps to <undefined>

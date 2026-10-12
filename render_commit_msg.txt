@@ -1,0 +1,1 @@
+Render readiness: explicit server deps, PORT/HOST env support, render config
